@@ -44,8 +44,48 @@ api.add_resource(Plants, '/plants')
 class PlantByID(Resource):
 
     def get(self, id):
-        plant = Plant.query.filter_by(id=id).first().to_dict()
+        plant = Plant.query.filter_by(id=id).first().to_dict()    
+        
+        if not plant:
+            return {"error": f"plant with id {id} not found"}
+         
         return make_response(jsonify(plant), 200)
+    
+    def patch(self, id):
+        plant = Plant.query.filter_by(id=id).first()
+
+        if not plant:
+            return {"error": f"plant with id {id} not found"}
+        
+        data = request.get_json()
+        for attr, value in data.items():
+            if hasattr(plant, attr):
+               setattr(plant, attr, value)
+
+        db.session.add(plant)
+        db.session.commit()
+
+        response = make_response(
+            plant.to_dict(),
+            200
+        )
+        return response
+
+    
+    def delete(self, id):
+        plant = Plant.query.filter_by(id=id).first()
+        db.session.delete(plant)
+        db.session.commit()
+
+        response_body = {
+            'delete_successfull': True,
+            'message': 'No Content'
+        }
+
+        return make_response(
+            response_body,
+            204
+        )
 
 
 api.add_resource(PlantByID, '/plants/<int:id>')
